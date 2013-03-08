@@ -33,6 +33,17 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# This script has to be run as root or by sudo
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root or by using sudo" 1>&2
+   exit 1
+fi
+
+# Check for mailbox & if not existing create it.
+if [ ! -c mailbox ]; then
+	mknod mailbox c 100 0
+fi
+
 # Check that overscan is enabled.
 if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
   echo -ne "Overscan is currently disabled. Please add the line\n\ndisable_overscan\n\nto the bottom of the config.txt file in the /boot\ndirectory, reboot & then rerun this script.\n"
@@ -129,3 +140,5 @@ done
 echo -ne "The current settings are temporary. If you wish to make them perminant add the\n\
 following lines to the bottom of your /boot/config.txt file.\n\n\
 disable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n"
+# Clean up mailbox file
+rm -f mailbox
