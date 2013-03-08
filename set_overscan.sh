@@ -128,4 +128,4 @@ done
 # Finished.
 echo -ne "The current settings are temporary. If you wish to make them perminant add the\n\
 following lines to the bottom of your /boot/config.txt file.\n\n\
-disable_overscan=0\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n"
+disable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n"
