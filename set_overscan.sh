@@ -35,7 +35,7 @@
 
 # Check that overscan is enabled.
 if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
-  echo -ne "Overscan is currently disabled. Please add the line\n\noverscan_disabled=0\n\nto the bottom of the config.txt file in the /boot\ndirectory, reboot & then rerun this script.\n"
+  echo -ne "Overscan is currently disabled. Please add the line\n\ndisable_overscan\n\nto the bottom of the config.txt file in the /boot\ndirectory, reboot & then rerun this script.\n"
         exit 1
 fi
 
