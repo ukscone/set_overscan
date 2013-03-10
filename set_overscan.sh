@@ -1,8 +1,8 @@
-#!/bin/bash
-#
-# Modify overscan on the fly.
+##########################################################################
+# set_overscan.sh v0.2
+# Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
-# 2013-01-05
+# 2013-03-10
 #
 # There is very little, ok no error/sanity checking. I've left that as an exercise
 # for the reader :D This is a very simplistic script but it works and i'm sure someone
@@ -33,21 +33,55 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# This script has to be run as root or by sudo
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root or by using sudo" 1>&2
-   exit 1
+#########################################################################
+# Functions                                                             #
+#########################################################################
+function get_kc
+{
+    od -t o1 | awk '{ for (i=2; i<=NF; i++)
+                        printf("%s%s", i==2 ? "" : " ", $i)
+                        exit }'
+}
+
+#########################################################################
+# Variables & Constants                                                 #
+#########################################################################
+# Grab terminal capabilities
+tty_cuu1=$(tput cuu1 2>&1 | get_kc)            # up arrow
+tty_kcuu1=$(tput kcuu1 2>&1 | get_kc)
+tty_cud1=$(tput cud1 2>&1 | get_kc)            # down arrow
+tty_kcud1=$(tput kcud1 2>&1 | get_kc)
+tty_cub1=$(tput cub1 2>&1 | get_kc)            # left arrow
+tty_kcub1=$(tput kcud1 2>&1 | get_kc)
+tty_cuf1=$(tput cuf1 2>&1 | get_kc)            # right arrow
+tty_kcuf1=$(tput kcud1 2>&1 | get_kc)
+# Some terminals (e.g. PuTTY) send the wrong code for certain arrow keys
+if [ "$tty_cuu1" = "033 133 101" -o "$tty_kcuu1" = "033 133 101" ]; then
+    tty_cudx="033 133 102"
+    tty_cufx="033 133 103"
+    tty_cubx="033 133 104"
+fi
+########################################################################
+# Main()
+########################################################################
+tty_save=$(stty -g)
+tput civis
+
+stty cs8 -icanon -echo min 10 time 1
+stty intr '' susp ''
+
+trap "stty $tty_save; ; tput cnorm; exit"  INT HUP TERM
+
+# Check that overscan is enabled.
+if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
+	whiptail --msgbox  "Overscan is currently disabled. Please add the line disable_overscan to the bottom of the config.txt file in the /boot directory, reboot & then rerun this script." 10 45
+	stty $tty_save
+	exit 1
 fi
 
 # Check for mailbox & if not existing create it.
 if [ ! -c mailbox ]; then
-	mknod mailbox c 100 0
-fi
-
-# Check that overscan is enabled.
-if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
-  echo -ne "Overscan is currently disabled. Please add the line\n\ndisable_overscan\n\nto the bottom of the config.txt file in the /boot\ndirectory, reboot & then rerun this script.\n"
-        exit 1
+       mknod mailbox c 100 0
 fi
 
 # Get current overscan values from GPU
@@ -57,88 +91,74 @@ GPU_OVERSCAN_BOTTOM=`echo $TEMP | awk -F ' ' '{print $2}'`
 GPU_OVERSCAN_LEFT=`echo $TEMP | awk -F ' ' '{print $3}'`
 GPU_OVERSCAN_RIGHT=`echo $TEMP | awk -F ' ' '{print $4}'`
 
-# Set overscan top
+# How big is the screen?
+TEMP=`fbset | grep 'mode "' | awk -F ' ' '{print $2}' | tr \" \ `
+XRES=`echo $TEMP |awk -F 'x' '{print $1}'`
+YRES=`echo $TEMP |awk -F 'x' '{print $2}'`
+BYTES=`expr $XRES \* $YRES \* 2`
+
+
+# Create some random data & zero'ed data 
+head -c $BYTES < /dev/urandom > rand
+head -c $BYTES </dev/zero > cleared
+
+# Going to modify top-left overscan
+whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
+
+cat rand >/dev/fb0
+
+# Set overscan top-left corner
 LOOP=1
-echo -ne "Setting overscan top. Press + key to increase, - key to decrease & q key to finish.\n"
 while [ $LOOP -eq 1 ]; do
-     read -s -r -d "" -N 1 CHAR
-     case "$CHAR" in
-	+)
-    		((GPU_OVERSCAN_TOP++))
-    		;;
-	-)
-		((GPU_OVERSCAN_TOP--))
-    		;;
-	q)
-		let LOOP=0 
-    		;;
-	esac
+
+	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
+	case "$keypress" in
+        	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_TOP--));;
+        	"$tty_cud1"|"$tty_kcud1"|"$tty_cudx") ((GPU_OVERSCAN_TOP++));;
+        	"$tty_cub1"|"$tty_kcub1"|"$tty_cubx") ((GPU_OVERSCAN_LEFT--));;
+        	"$tty_cuf1"|"$tty_kcuf1"|"$tty_cufx") ((GPU_OVERSCAN_LEFT++));;
+		"161") LOOP=0;; 
+    	esac
+
 	./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
 done
 
-# Set overscan bottom
+# Clear the screen
+cat cleared >/dev/fb0
+
+# Going to modify bottom-right overscan
+whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the bottom-right corner's overscan & press the q key when finished." 12 50
+
+# Dump some random data to /dev/fb0
+cat rand >/dev/fb0
+
+# Set overscan bottom-right corner
 LOOP=1
-echo -ne "Setting overscan bottom. Press + key to increase, - key to decrease & q key to finish.\n"
 while [ $LOOP -eq 1 ]; do
-     read -s -r -d "" -N 1 CHAR
-     case "$CHAR" in
-        +)
-                ((GPU_OVERSCAN_BOTTOM++))
-                ;;
-        -)
-                ((GPU_OVERSCAN_BOTTOM--))
-                ;;
-        q)
-                let LOOP=0
-                ;;
-        esac
-        ./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
+        
+	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
+	case "$keypress" in
+        	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_BOTTOM++));;
+        	"$tty_cud1"|"$tty_kcud1"|"$tty_cudx") ((GPU_OVERSCAN_BOTTOM--));;
+        	"$tty_cub1"|"$tty_kcub1"|"$tty_cubx") ((GPU_OVERSCAN_RIGHT++)) ;;
+        	"$tty_cuf1"|"$tty_kcuf1"|"$tty_cufx") ((GPU_OVERSCAN_RIGHT--));;
+        	"161") LOOP=0;;
+    	esac
+	./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
 
 done
 
-# Set overscan left
-LOOP=1
-echo -ne "Setting overscan left. Press + key to increase, - key to decrease & q key to finish.\n"
-while [ $LOOP -eq 1 ]; do
-     read -s -r -d "" -N 1 CHAR
-     case "$CHAR" in
-        +)
-                ((GPU_OVERSCAN_LEFT++))
-                ;;
-        -)
-                ((GPU_OVERSCAN_LEFT--))
-                ;;
-        q)
-                let LOOP=0
-                ;;
-        esac
-        ./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
+# Clear the screen
+cat cleared > /dev/fb0
 
-done
+# Finished so write to /boot/config.txt
+echo -ne "# Overscan settings. Written by set_overscan.sh\ndisable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n" >> /boot/config.txt
 
-# Set overscan right
-LOOP=1
-echo -ne "Setting overscan right. Press + key to increase, - key to decrease & q key to finish.\n"
-while [ $LOOP -eq 1 ]; do
-     read -s -r -d "" -N 1 CHAR
-     case "$CHAR" in
-        +)
-                ((GPU_OVERSCAN_RIGHT++))
-                ;;
-        -)
-                ((GPU_OVERSCAN_RIGHT--))
-                ;;
-        q)
-                let LOOP=0
-                ;;
-        esac
-        ./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
-
-done
-
-# Finished.
-echo -ne "The current settings are temporary. If you wish to make them perminant add the\n\
-following lines to the bottom of your /boot/config.txt file.\n\n\
-disable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n"
-# Clean up mailbox file
+# Clean up 
 rm -f mailbox
+rm rand
+rm cleared
+
+# Restore stty to old value
+stty $tty_save
+tput cnorm
