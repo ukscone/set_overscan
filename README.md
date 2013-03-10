@@ -16,9 +16,9 @@ to the Raspberry Pi's overscan setting on the fly easy.
 
 Because I need to use mknod to create a special file the script must be run by root or using sudo.
 
-Use the included Makefile to build overscan and then run the set_overscan.sh script. You currently use the + & -
-keys to change each setting in turn & the q key to move to the next overscan value to change. The script currently
-does not automatially write the settings to /boot/config.txt but i'll be adding that.
+Use the included Makefile to build overscan and then run the set_overscan.sh script. You currently use the arrow/cursor 
+keys to change each setting in turn & the q key to move to the next overscan value to change. The script writes the 
+final values to /boot/config.txt
 
-Russell "ukscone" Davis 2013-03-08
+Russell "ukscone" Davis 2013-03-10
 
