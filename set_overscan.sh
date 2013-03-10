@@ -1,5 +1,6 @@
+#!/bin/bash
 ##########################################################################
-# set_overscan.sh v0.2
+# set_overscan.sh v0.3
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
 # 2013-03-10
@@ -34,7 +35,24 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #########################################################################
-# Functions                                                             #
+# Check we are root or using sudo otherwise why bother?                 #
+#########################################################################
+# Make sure only root can run our script
+if [[ $EUID -ne 0 ]]; then
+        echo "This script must be run by root or using sudo" 1>&2
+        exit 1
+fi
+
+#########################################################################
+# Is overscan enabled? If not the fix it & reboot                       #
+#########################################################################
+if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
+        whiptail --msgbox  "Overscan is currently disabled. Please add the line disable_overscan to the bottom of the config.txt file in the /boot directory, reboot & then rerun this script." 10 45
+        exit 1
+fi
+
+#########################################################################
+# Function                                                              #
 #########################################################################
 function get_kc
 {
@@ -44,7 +62,7 @@ function get_kc
 }
 
 #########################################################################
-# Variables & Constants                                                 #
+# Variables & Constants & create some files                             #
 #########################################################################
 # Grab terminal capabilities
 tty_cuu1=$(tput cuu1 2>&1 | get_kc)            # up arrow
@@ -60,29 +78,6 @@ if [ "$tty_cuu1" = "033 133 101" -o "$tty_kcuu1" = "033 133 101" ]; then
     tty_cudx="033 133 102"
     tty_cufx="033 133 103"
     tty_cubx="033 133 104"
-fi
-########################################################################
-# Main()
-########################################################################
-# Make sure only root can run our script
-if [[ $EUID -ne 0 ]]; then
-	echo "This script must be run as root" 1>&2
-	exit 1
-fi
-
-tty_save=$(stty -g)
-tput civis
-
-stty cs8 -icanon -echo min 10 time 1
-stty intr '' susp ''
-
-trap "stty $tty_save; ; tput cnorm; exit"  INT HUP TERM
-
-# Check that overscan is enabled.
-if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
-	whiptail --msgbox  "Overscan is currently disabled. Please add the line disable_overscan to the bottom of the config.txt file in the /boot directory, reboot & then rerun this script." 10 45
-	stty $tty_save
-	exit 1
 fi
 
 # Check for mailbox & if not existing create it.
@@ -103,10 +98,19 @@ XRES=`echo $TEMP |awk -F 'x' '{print $1}'`
 YRES=`echo $TEMP |awk -F 'x' '{print $2}'`
 BYTES=`expr $XRES \* $YRES \* 2`
 
-
-# Create some random data & zero'ed data 
+# Create some random data & zero'ed data
 head -c $BYTES < /dev/urandom > rand
 head -c $BYTES </dev/zero > cleared
+
+########################################################################
+# Main()
+########################################################################
+tty_save=$(stty -g)
+
+stty cs8 -icanon -echo min 10 time 1
+stty intr '' susp ''
+
+trap "stty $tty_save; exit"  INT HUP TERM
 
 # Going to modify top-left overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
@@ -167,4 +171,3 @@ rm cleared
 
 # Restore stty to old value
 stty $tty_save
-tput cnorm
