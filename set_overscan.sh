@@ -110,7 +110,7 @@ tty_save=$(stty -g)
 stty cs8 -icanon -echo min 10 time 1
 stty intr '' susp ''
 
-trap "stty $tty_save; exit"  INT HUP TERM
+trap "stty $tty_save; tput cnorm ; exit"  INT HUP TERM
 
 # Going to modify top-left overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
@@ -179,3 +179,4 @@ rm cleared
 # Restore stty to old value
 stty $tty_save
 clear
+tput cnorm
