@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.6
+# set_overscan.sh v0.6a
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
 # 2013-03-10
@@ -157,6 +157,7 @@ clear
 # Going to modify bottom-right overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the bottom-right corner's overscan & press the q key when finished." 12 50
 
+clear
 # No cursor messing up my pretty screen
 tput civis
 
