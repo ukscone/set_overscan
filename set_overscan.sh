@@ -1,5 +1,5 @@
 #!/bin/bash
-##########################################################################
+#########################################################################
 # set_overscan.sh v0.3
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
@@ -115,6 +115,10 @@ trap "stty $tty_save; exit"  INT HUP TERM
 # Going to modify top-left overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
 
+# We don't need no cursor messing up my pretty screen
+tput civis
+
+# Dump some random data to /dev/fb0
 cat rand >/dev/fb0
 
 # Set overscan top-left corner
@@ -138,6 +142,9 @@ cat cleared >/dev/fb0
 
 # Going to modify bottom-right overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the bottom-right corner's overscan & press the q key when finished." 12 50
+
+# No cursor messing up my pretty screen
+tput civis
 
 # Dump some random data to /dev/fb0
 cat rand >/dev/fb0
