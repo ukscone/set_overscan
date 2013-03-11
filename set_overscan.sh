@@ -171,3 +171,4 @@ rm cleared
 
 # Restore stty to old value
 stty $tty_save
+clear
