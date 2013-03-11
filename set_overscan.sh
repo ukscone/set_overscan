@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.5
+# set_overscan.sh v0.6
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
 # 2013-03-10
