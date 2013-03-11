@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.3
+# set_overscan.sh v0.5
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
 # 2013-03-10
@@ -94,9 +94,15 @@ GPU_OVERSCAN_RIGHT=`echo $TEMP | awk -F ' ' '{print $4}'`
 
 # How big is the screen?
 TEMP=`fbset | grep 'mode "' | awk -F ' ' '{print $2}' | tr \" \ `
-XRES=`echo $TEMP |awk -F 'x' '{print $1}'`
-YRES=`echo $TEMP |awk -F 'x' '{print $2}'`
-BYTES=`expr $XRES \* $YRES \* 2`
+FXRES=`echo $TEMP |awk -F 'x' '{print $1}'`
+FYRES=`echo $TEMP |awk -F 'x' '{print $2}'`
+BYTES=`expr $FXRES \* $FYRES \* 2`
+
+TXRES=`stty size | awk -F ' ' '{print $2}'`
+TYRES=`stty size | awk -F ' ' '{print $1}'`
+
+XMIDPOINT=$(($TXRES/2))
+YMIDPOINT=$(($TYRES/2))
 
 # Create some random data & zero'ed data
 head -c $BYTES < /dev/urandom > rand
@@ -115,6 +121,8 @@ trap "stty $tty_save; tput cnorm ; exit"  INT HUP TERM
 # Going to modify top-left overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
 
+clear
+
 # We don't need no cursor messing up my pretty screen
 tput civis
 
@@ -124,7 +132,12 @@ cat rand >/dev/fb0
 # Set overscan top-left corner
 LOOP=1
 while [ $LOOP -eq 1 ]; do
-
+	
+	TEXT=" TOP=$GPU_OVERSCAN_TOP, LEFT=$GPU_OVERSCAN_LEFT, BOTTOM=$GPU_OVERSCAN_BOTTOM, RIGHT=$GPU_OVERSCAN_RIGHT   "
+        LEN=$((${#TEXT}/2))
+        XPOS=$(($XMIDPOINT-$LEN))
+        echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
+	
 	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
         	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_TOP--));;
@@ -139,6 +152,7 @@ done
 
 # Clear the screen
 cat cleared >/dev/fb0
+clear
 
 # Going to modify bottom-right overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the bottom-right corner's overscan & press the q key when finished." 12 50
@@ -152,6 +166,12 @@ cat rand >/dev/fb0
 # Set overscan bottom-right corner
 LOOP=1
 while [ $LOOP -eq 1 ]; do
+
+	TEXT=" TOP=$GPU_OVERSCAN_TOP, LEFT=$GPU_OVERSCAN_LEFT, BOTTOM=$GPU_OVERSCAN_BOTTOM, RIGHT=$GPU_OVERSCAN_RIGHT   "
+        LEN=$((${#TEXT}/2))
+        XPOS=$(($XMIDPOINT-$LEN))
+        echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
+
         
 	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
@@ -167,6 +187,7 @@ done
 
 # Clear the screen
 cat cleared > /dev/fb0
+clear
 
 # Finished so write to /boot/config.txt
 echo -ne "# Overscan settings. Written by set_overscan.sh\ndisable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n" >> /boot/config.txt
