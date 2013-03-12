@@ -1,6 +1,6 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.6a
+# set_overscan.sh v0.7
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
 # 2013-03-10
@@ -113,7 +113,7 @@ head -c $BYTES </dev/zero > cleared
 ########################################################################
 tty_save=$(stty -g)
 
-stty cs8 -icanon -echo min 10 time 1
+stty cs8 -icanon -echo min 3 time 1
 stty intr '' susp ''
 
 trap "stty $tty_save; tput cnorm ; exit"  INT HUP TERM
@@ -138,7 +138,7 @@ while [ $LOOP -eq 1 ]; do
         XPOS=$(($XMIDPOINT-$LEN))
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
 	
-	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
+	keypress=$(dd bs=3 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
         	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_TOP--));;
         	"$tty_cud1"|"$tty_kcud1"|"$tty_cudx") ((GPU_OVERSCAN_TOP++));;
@@ -174,7 +174,7 @@ while [ $LOOP -eq 1 ]; do
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
 
         
-	keypress=$(dd bs=10 count=1 2> /dev/null | get_kc)
+	keypress=$(dd bs=3 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
         	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_BOTTOM++));;
         	"$tty_cud1"|"$tty_kcud1"|"$tty_cudx") ((GPU_OVERSCAN_BOTTOM--));;
