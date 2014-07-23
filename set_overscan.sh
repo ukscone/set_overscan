@@ -1,9 +1,9 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.7
+# set_overscan.sh v0.8
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
-# 2013-03-10
+# 2013-03-10, 2014-07-23
 #
 # There is very little, ok no error/sanity checking. I've left that as an exercise
 # for the reader :D This is a very simplistic script but it works and i'm sure someone
@@ -81,8 +81,10 @@ if [ "$tty_cuu1" = "033 133 101" -o "$tty_kcuu1" = "033 133 101" ]; then
 fi
 
 # Check for mailbox & if not existing create it.
-if [ ! -c mailbox ]; then
-       mknod mailbox c 100 0
+created_mailbox=0
+if [ ! -c /dev/mailbox ]; then
+       mknod /dev/mailbox c 100 0
+       create_mailbox=1
 fi
 
 # Get current overscan values from GPU
@@ -194,7 +196,9 @@ clear
 echo -ne "# Overscan settings. Written by set_overscan.sh\ndisable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n" >> /boot/config.txt
 
 # Clean up 
-rm -f mailbox
+if [ $create_mailbox -eq 1 ]; then
+	rm -f /dev/mailbox
+fi
 rm rand
 rm cleared
 

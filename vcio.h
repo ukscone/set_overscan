@@ -136,6 +136,6 @@ extern int /*rc*/ bcm_mailbox_property(void *data, int size);
 /* 
  * The name of the device file 
  */
-#define DEVICE_FILE_NAME "mailbox"
+#define DEVICE_FILE_NAME "/dev/mailbox"
 
 #endif
