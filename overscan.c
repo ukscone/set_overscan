@@ -29,6 +29,8 @@
 
 /* Tiny mod by Russell "ukscone" Davis to make it usable for the 
  * set_overscan.sh script. 2013-01-05
+ *
+ * Tidy up & remove of unneeded code. 2014-07-25
 */
 
 #include <stdio.h>
@@ -37,45 +39,8 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <stdint.h>
-#include <sys/mman.h>
 #include <sys/ioctl.h>
 #include "vcio.h"
-
-#define PAGE_SIZE (4*1024)
-
-static void *mapmem(unsigned base, unsigned size)
-{
-   int mem_fd;
-   unsigned offset = base % PAGE_SIZE; 
-   base = base - offset;
-   /* open /dev/mem */
-   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-      printf("can't open /dev/mem \n");
-      exit (-1);
-   }
-   void *mem = mmap(
-      0,
-      size,
-      PROT_READ|PROT_WRITE,
-      MAP_SHARED/*|MAP_FIXED*/,
-      mem_fd, 
-      base);
-   if (mem == MAP_FAILED) {
-      printf("mmap error %d\n", (int)mem);
-      exit (-1);
-   }
-   close(mem_fd);
-   return (char *)mem + offset;
-}
-
-static void *unmapmem(void *addr, unsigned size)
-{
-   int s = munmap(addr, size);
-   if (s != 0) {
-      printf("munmap error %d\n", s);
-      exit (-1);
-   }
-}
 
 /* 
  * use ioctl to send mbox property message
@@ -142,8 +107,6 @@ static unsigned set_overscan(int file_desc, unsigned coord[4])
    coord[3] = p[8];
    return 0;
 }
-
-
 
 /* 
  * Main - Call the ioctl functions 
