@@ -40,7 +40,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
-#include "vcio.h"
+#include "overscan.h"
 
 /* 
  * use ioctl to send mbox property message
@@ -64,7 +64,7 @@ static unsigned get_overscan(int file_desc, unsigned coord[4])
    p[i++] = 0; // size
    p[i++] = 0x00000000; // process request
 
-   p[i++] = 0x0004000a; // get overscan
+   p[i++] = VCMSG_GET_OVERSCAN; // get overscan
    p[i++] = 0x00000010; // buffer size
    p[i++] = 0x00000000; // request size
    p[i++] = 0x00000000; // value buffer
@@ -90,7 +90,7 @@ static unsigned set_overscan(int file_desc, unsigned coord[4])
    p[i++] = 0; // size
    p[i++] = 0x00000000; // process request
 
-   p[i++] = 0x0004800a; // set overscan
+   p[i++] = VCMSG_SET_OVERSCAN; // set overscan
    p[i++] = 0x00000010; // buffer size
    p[i++] = 0x00000010; // request size
    p[i++] = coord[0]; // value buffer

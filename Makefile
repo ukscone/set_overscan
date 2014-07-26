@@ -1,2 +1,2 @@
-overscan: overscan.c vcio.h
+overscan: overscan.c overscan.h
 	gcc -o overscan overscan.c
