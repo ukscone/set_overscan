@@ -1,128 +1,122 @@
-/**
- * Copyright (c) 2012 Broadcom. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The names of the above-listed copyright holders may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/* Tiny mod by Russell "ukscone" Davis to make it usable for the 
- * set_overscan.sh script. 2013-01-05
- *
- * Tidy up & remove of unneeded code. 2014-07-25
-*/
-
+/****************************************************************
+ * overscan.c version 1.0.1 -- get/set overscan values on the fly
+ * to use this standalone you will need to create the mailbox
+ * device first. sudo mknod /dev/mailbox c 100 0
+ * if used with the set_overscan.sh script this is not necessary
+ ****************************************************************
+ * returns 0 if successful, positive integer if failure
+ * 1 == unable to open device, 2 == ioctl error
+ * 
+ ****************************************************************
+ * complete rewrite from scratch of version 0.7
+ * and add some semblance of error checking.
+ ***************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
-#include "overscan.h"
+
+#define	GET_OVERSCAN		0x0004000a
+#define	TST_OVERSCAN		0x0004400a
+#define	SET_OVERSCAN		0x0004800a
+#define END_TAG			0x00000000
 
 /* 
- * use ioctl to send mbox property message
+ * send property message to mailbox using ioctl
  */
-
-static int mbox_property(int file_desc, void *buf)
+static int mailbox_property(int file_desc, void *buf)
 {
-   int ret_val = ioctl(file_desc, IOCTL_MBOX_PROPERTY, buf);
+   int return_value = ioctl(file_desc, _IOWR(100, 0, char *), buf);
 
-   if (ret_val < 0) {
-      printf("ioctl_set_msg failed:%d\n", ret_val);
+   /* ioctl error of some kind */ 
+   if (return_value < 0) {
+      close(file_desc);
+      exit(2);
    }
 
-   return ret_val;
+   return return_value;
 }
 
+/*
+ * Get the current values for overscan
+ */
 static unsigned get_overscan(int file_desc, unsigned coord[4])
 {
    int i=0;
-   unsigned p[32];
-   p[i++] = 0; // size
-   p[i++] = 0x00000000; // process request
+   unsigned property[32];
+   property[i++] = 0; // size
+   property[i++] = 0x00000000;
 
-   p[i++] = VCMSG_GET_OVERSCAN; // get overscan
-   p[i++] = 0x00000010; // buffer size
-   p[i++] = 0x00000000; // request size
-   p[i++] = 0x00000000; // value buffer
-   p[i++] = 0x00000000; // value buffer
-   p[i++] = 0x00000000; // value buffer
-   p[i++] = 0x00000000; // value buffer
-   p[i++] = 0x00000000; // end tag
-   p[0] = i*sizeof *p; // actual size
+   property[i++] = GET_OVERSCAN; 
+   property[i++] = 0x00000010; 
+   property[i++] = 0x00000000;
+   property[i++] = 0x00000000; 
+   property[i++] = 0x00000000;
+   property[i++] = 0x00000000;
+   property[i++] = 0x00000000;
+   property[i++] = END_TAG;
+   property[0] = i*sizeof *property;
 
-   mbox_property(file_desc, p);
-   coord[0] = p[5];
-   coord[1] = p[6];
-   coord[2] = p[7];
-   coord[3] = p[8];
+   mailbox_property(file_desc, property);
+   coord[0] = property[5]; /* top */
+   coord[1] = property[6]; /* bottom */
+   coord[2] = property[7]; /* left */
+   coord[3] = property[8]; /* right */
    return 0;
 }
 
-
+/*
+ * Set overscan values. No checking that the values are sane or
+ * successful. If you want to check they've been set you could
+ * do a get after the set.
+ */
 static unsigned set_overscan(int file_desc, unsigned coord[4])
 {
    int i=0;
-   unsigned p[32];
-   p[i++] = 0; // size
-   p[i++] = 0x00000000; // process request
+   unsigned property[32];
+   property[i++] = 0;
+   property[i++] = 0x00000000;
 
-   p[i++] = VCMSG_SET_OVERSCAN; // set overscan
-   p[i++] = 0x00000010; // buffer size
-   p[i++] = 0x00000010; // request size
-   p[i++] = coord[0]; // value buffer
-   p[i++] = coord[1]; // value buffer
-   p[i++] = coord[2]; // value buffer
-   p[i++] = coord[3]; // value buffer
-   p[i++] = 0x00000000; // end tag
-   p[0] = i*sizeof *p; // actual size
+   property[i++] = SET_OVERSCAN;
+   property[i++] = 0x00000010;
+   property[i++] = 0x00000010;
+   property[i++] = coord[0]; /* top */
+   property[i++] = coord[1]; /* bottom */
+   property[i++] = coord[2]; /* left */
+   property[i++] = coord[3]; /* right */
+   property[i++] = END_TAG; 
+   property[0] = i*sizeof *property; // actual size
 
-   mbox_property(file_desc, p);
-   coord[0] = p[5];
-   coord[1] = p[6];
-   coord[2] = p[7];
-   coord[3] = p[8];
+   mailbox_property(file_desc, property);
+   coord[0] = property[5]; /* top */
+   coord[1] = property[6]; /* bottom */
+   coord[2] = property[7]; /* left */
+   coord[3] = property[8]; /* right */
    return 0;
 }
 
-/* 
- * Main - Call the ioctl functions 
+/*
+ * Start of program
  */
 int main(int argc, char *argv[])
 {
-   int file_desc, i;
+   int file_desc;
    unsigned coord[4];
 
-   // open a char device file used for communicating with kernel mbox driver
-   file_desc = open(DEVICE_FILE_NAME, 0);
-
+   file_desc = open("/dev/mailbox", 0);
+   if (file_desc == -1)
+      exit(1);
+   /* order of coords on the commasnd line/return order
+    * top, bottom, left, right and they are all or nothing
+    * you can't set just one value.
+    */
    if (argc == 5) {
-      for (i=0; i<4; i++)
+      for (int i=0; i<4; i++)
          if (argc > 1+i)
-           coord[i] = strtoul(argv[1+i], 0, 0);
+            coord[i] = strtoul(argv[1+i], 0, 0);
       set_overscan(file_desc, coord);
    } else {
      get_overscan(file_desc, coord);

@@ -1,2 +1,2 @@
-overscan: overscan.c overscan.h
-	gcc -o overscan overscan.c
+overscan: overscan.c
+	gcc -Wall -std=c99 -o overscan overscan.c
