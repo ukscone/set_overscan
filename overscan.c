@@ -47,7 +47,7 @@ static unsigned get_overscan(int file_desc, unsigned coord[4])
 {
    int i=0;
    unsigned property[32];
-   property[i++] = 0; // size
+   property[i++] = 0;
    property[i++] = 0x00000000;
 
    property[i++] = GET_OVERSCAN; 
@@ -88,7 +88,7 @@ static unsigned set_overscan(int file_desc, unsigned coord[4])
    property[i++] = coord[2]; /* left */
    property[i++] = coord[3]; /* right */
    property[i++] = END_TAG; 
-   property[0] = i*sizeof *property; // actual size
+   property[0] = i*sizeof *property;
 
    mailbox_property(file_desc, property);
    coord[0] = property[5]; /* top */
