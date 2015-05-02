@@ -109,7 +109,7 @@ fi
 created_mailbox=0
 if [ ! -c /dev/vcio ]; then
        mknod /dev/vcio c 100 0
-       create_mailbox=1
+       created_mailbox=1
 fi
 
 # Get current overscan values from GPU
@@ -225,8 +225,8 @@ set_config_var overscan_left $GPU_OVERSCAN_LEFT $CONFIG
 set_config_var overscan_right $GPU_OVERSCAN_RIGHT $CONFIG
 
 # Clean up 
-if [ $create_mailbox -eq 1 ]; then
-	rm -f /dev/mailbox
+if [ $created_mailbox -eq 1 ]; then
+	rm -f /dev/vcio
 fi
 rm rand
 rm cleared
