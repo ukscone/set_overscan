@@ -1,9 +1,9 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.8
+# set_overscan.sh v0.10
 # Modify overscan on the fly.                                            
-# By Russell "ukscone" Davis using RPi mailbox code from Broadcom & Dom Cobley
-# 2013-03-10, 2014-07-23
+# By Russell "ukscone" Davis using code from Broadcom, Dom Cobley & Alex Bradbury
+# 2013-03-10, 2014-07-23 2015-05-01
 #
 # There is very little, ok no error/sanity checking. I've left that as an exercise
 # for the reader :D This is a very simplistic script but it works and i'm sure someone
@@ -34,6 +34,40 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+CONFIG=/boot/config.txt
+
+#########################################################################
+# Function                                                              #
+#########################################################################
+function get_kc
+{
+    od -t o1 | awk '{ for (i=2; i<=NF; i++)
+                        printf("%s%s", i==2 ? "" : " ", $i)
+                        exit }'
+}
+
+set_config_var() {
+  lua - "$1" "$2" "$3" <<EOF > "$3.bak"
+local key=assert(arg[1])
+local value=assert(arg[2])
+local fn=assert(arg[3])
+local file=assert(io.open(fn))
+local made_change=false
+for line in file:lines() do
+  if line:match("^#?%s*"..key.."=.*$") then
+    line=key.."="..value
+    made_change=true
+  end
+  print(line)
+end
+
+if not made_change then
+  print(key.."="..value)
+end
+EOF
+mv "$3.bak" "$3"
+}
+
 #########################################################################
 # Check we are root or using sudo otherwise why bother?                 #
 #########################################################################
@@ -46,20 +80,11 @@ fi
 #########################################################################
 # Is overscan enabled? If not the fix it & reboot                       #
 #########################################################################
-if [ `vcgencmd get_config disable_overscan | awk -F '=' '{print $2}'` -eq "1" ]; then
-        whiptail --msgbox  "Overscan is currently disabled. Please add the line disable_overscan to the bottom of the config.txt file in the /boot directory, reboot & then rerun this script." 10 45
+if [ "$(vcgencmd get_config disable_overscan | awk -F '=' '{print $2}')" -eq "0" ]; then
+        set_config_var disable_overscan 1 $CONFIG
+        whiptail --msgbox  "disable_overscan=1 added to config.txt, overscan will be enabled on next reboot. reboot & then rerun this script." 10 45
         exit 1
 fi
-
-#########################################################################
-# Function                                                              #
-#########################################################################
-function get_kc
-{
-    od -t o1 | awk '{ for (i=2; i<=NF; i++)
-                        printf("%s%s", i==2 ? "" : " ", $i)
-                        exit }'
-}
 
 #########################################################################
 # Variables & Constants & create some files                             #
@@ -82,29 +107,29 @@ fi
 
 # Check for mailbox & if not existing create it.
 created_mailbox=0
-if [ ! -c /dev/mailbox ]; then
-       mknod /dev/mailbox c 100 0
+if [ ! -c /dev/vcio ]; then
+       mknod /dev/vcio c 100 0
        create_mailbox=1
 fi
 
 # Get current overscan values from GPU
-TEMP=`./overscan`
-GPU_OVERSCAN_TOP=`echo $TEMP | awk -F ' ' '{print $1}'`
-GPU_OVERSCAN_BOTTOM=`echo $TEMP | awk -F ' ' '{print $2}'`
-GPU_OVERSCAN_LEFT=`echo $TEMP | awk -F ' ' '{print $3}'`
-GPU_OVERSCAN_RIGHT=`echo $TEMP | awk -F ' ' '{print $4}'`
+TEMP=$(./overscan)
+GPU_OVERSCAN_TOP=$(echo "$TEMP" | awk -F ' ' '{print $1}')
+GPU_OVERSCAN_BOTTOM=$(echo "$TEMP" | awk -F ' ' '{print $2}')
+GPU_OVERSCAN_LEFT=$(echo "$TEMP" | awk -F ' ' '{print $3}')
+GPU_OVERSCAN_RIGHT=$(echo "$TEMP" | awk -F ' ' '{print $4}')
 
 # How big is the screen?
-TEMP=`fbset | grep 'mode "' | awk -F ' ' '{print $2}' | tr \" \ `
-FXRES=`echo $TEMP |awk -F 'x' '{print $1}'`
-FYRES=`echo $TEMP |awk -F 'x' '{print $2}'`
-BYTES=`expr $FXRES \* $FYRES \* 2`
+TEMP=$(fbset | grep 'mode "' | awk -F ' ' '{print $2}' | tr \" \ )
+FXRES=$(echo "$TEMP" |awk -F 'x' '{print $1}')
+FYRES=$(echo "$TEMP" |awk -F 'x' '{print $2}')
+BYTES=$(expr $FXRES \* $FYRES \* 2)
 
-TXRES=`stty size | awk -F ' ' '{print $2}'`
-TYRES=`stty size | awk -F ' ' '{print $1}'`
+TXRES=$(stty size | awk -F ' ' '{print $2}')
+TYRES=$(stty size | awk -F ' ' '{print $1}')
 
-XMIDPOINT=$(($TXRES/2))
-YMIDPOINT=$(($TYRES/2))
+XMIDPOINT=$((TXRES/2))
+YMIDPOINT=$((TYRES/2))
 
 # Create some random data & zero'ed data
 head -c $BYTES < /dev/urandom > rand
@@ -118,7 +143,7 @@ tty_save=$(stty -g)
 stty cs8 -icanon -echo min 3 time 1
 stty intr '' susp ''
 
-trap "stty $tty_save; tput cnorm ; exit"  INT HUP TERM
+trap 'stty $tty_save; tput cnorm ; exit'  INT HUP TERM
 
 # Going to modify top-left overscan
 whiptail --title "Instructions" --msgbox "We are going to dump some random data to the screen. Once the screen is full of random coloured dots use the arrow keys to increase or decrease the top-left corner's overscan & press the q key when finished." 12 50
@@ -137,7 +162,7 @@ while [ $LOOP -eq 1 ]; do
 	
 	TEXT=" TOP=$GPU_OVERSCAN_TOP, LEFT=$GPU_OVERSCAN_LEFT, BOTTOM=$GPU_OVERSCAN_BOTTOM, RIGHT=$GPU_OVERSCAN_RIGHT   "
         LEN=$((${#TEXT}/2))
-        XPOS=$(($XMIDPOINT-$LEN))
+        XPOS=$((XMIDPOINT-LEN))
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
 	
 	keypress=$(dd bs=3 count=1 2> /dev/null | get_kc)
@@ -172,7 +197,7 @@ while [ $LOOP -eq 1 ]; do
 
 	TEXT=" TOP=$GPU_OVERSCAN_TOP, LEFT=$GPU_OVERSCAN_LEFT, BOTTOM=$GPU_OVERSCAN_BOTTOM, RIGHT=$GPU_OVERSCAN_RIGHT   "
         LEN=$((${#TEXT}/2))
-        XPOS=$(($XMIDPOINT-$LEN))
+        XPOS=$((XMIDPOINT-LEN))
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
 
         
@@ -192,8 +217,12 @@ done
 cat cleared > /dev/fb0
 clear
 
-# Finished so write to /boot/config.txt
-echo -ne "# Overscan settings. Written by set_overscan.sh\ndisable_overscan\noverscan_top=$GPU_OVERSCAN_TOP\noverscan_bottom=$GPU_OVERSCAN_BOTTOM\noverscan_left=$GPU_OVERSCAN_LEFT\noverscan_right=$GPU_OVERSCAN_RIGHT\n" >> /boot/config.txt
+# Finished so update $CONFIG
+set_config_var disable_overscan 1 $CONFIG
+set_config_var overscan_top $GPU_OVERSCAN_TOP $CONFIG
+set_config_var overscan_bottom $GPU_OVERSCAN_BOTTOM $CONFIG
+set_config_var overscan_left $GPU_OVERSCAN_LEFT $CONFIG
+set_config_var overscan_right $GPU_OVERSCAN_RIGHT $CONFIG
 
 # Clean up 
 if [ $create_mailbox -eq 1 ]; then
