@@ -80,9 +80,9 @@ fi
 #########################################################################
 # Is overscan enabled? If not the fix it & reboot                       #
 #########################################################################
-if [ "$(vcgencmd get_config disable_overscan | awk -F '=' '{print $2}')" -eq "0" ]; then
-        set_config_var disable_overscan 1 $CONFIG
-        whiptail --msgbox  "disable_overscan=1 added to config.txt, overscan will be enabled on next reboot. reboot & then rerun this script." 10 45
+if [ "$(vcgencmd get_config disable_overscan | awk -F '=' '{print $2}')" -eq "1" ]; then
+        set_config_var disable_overscan 0 $CONFIG
+        whiptail --msgbox  "disable_overscan=0 added to config.txt, overscan will be enabled on next reboot. reboot & then rerun this script." 10 45
         exit 1
 fi
 
