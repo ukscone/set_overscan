@@ -4,7 +4,7 @@ set_overscan
 Set Raspberry Pi overscan on the fly.
 
 Although I do most of my Raspberry Pi messing around on a headless Raspberry Pi via ssh my "gaming" Raspberry Pi 
-is not always conected to the same monitor it was yesterday or will be tomorrow and because all my monitors are
+is not always connected to the same monitor it was yesterday or will be tomorrow and because all my monitors are
 different makes and models I often found myself squinting at the monitor to count pixels so I could change the overscan
 values in /boot/config.txt and then rebooting to find that i'd miscounted and needed to make more changes to the 
 overscan settings and repeating that until I got it just right.
