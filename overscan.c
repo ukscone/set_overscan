@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
    int file_desc;
    unsigned coord[4];
 
-   file_desc = open("/dev/mailbox", 0);
+   file_desc = open("/dev/vcio", 0);
    if (file_desc == -1)
       exit(1);
    /* order of coords on the commasnd line/return order
