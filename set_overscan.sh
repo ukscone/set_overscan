@@ -123,7 +123,7 @@ GPU_OVERSCAN_RIGHT=$(echo "$TEMP" | awk -F ' ' '{print $4}')
 TEMP=$(fbset | grep 'mode "' | awk -F ' ' '{print $2}' | tr \" \ )
 FXRES=$(echo "$TEMP" |awk -F 'x' '{print $1}')
 FYRES=$(echo "$TEMP" |awk -F 'x' '{print $2}')
-BYTES=$(expr $FXRES \* $FYRES \* 2)
+BYTES=$(expr $FXRES \* $FYRES \* 4)
 
 TXRES=$(stty size | awk -F ' ' '{print $2}')
 TYRES=$(stty size | awk -F ' ' '{print $1}')
