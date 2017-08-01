@@ -1,9 +1,9 @@
 #!/bin/bash
 #########################################################################
-# set_overscan.sh v0.10
+# set_overscan.sh v0.11
 # Modify overscan on the fly.                                            
 # By Russell "ukscone" Davis using code from Broadcom, Dom Cobley & Alex Bradbury
-# 2013-03-10, 2014-07-23 2015-05-01
+# 2013-03-10, 2014-07-23, 2015-05-01, 2017-08-01
 #   
 # There is very little, ok no error/sanity checking. I've left that as an exercise
 # for the reader :D This is a very simplistic script but it works and i'm sure someone
@@ -39,7 +39,7 @@ CONFIG=/boot/config.txt
 #########################################################################
 # Function                                                              #
 #########################################################################
-function get_kc
+get_kc ()
 {
     od -t o1 | awk '{ for (i=2; i<=NF; i++)
                         printf("%s%s", i==2 ? "" : " ", $i)
