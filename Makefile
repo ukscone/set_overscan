@@ -14,9 +14,9 @@ clean:
 distclean: clean
 
 install: $(TARGET)
-	install -D $(TARGET) $(DESTDIR)$(prefix)/sbin/$(TARGET)
+	install -D $(TARGET) $(DESTDIR)$(prefix)/bin/$(TARGET)
 
 uninstall:
-	-rm -f $(DESTDIR)$(prefix)/sbin/$(TARGET)
+	-rm -f $(DESTDIR)$(prefix)/bin/$(TARGET)
 
 .PHONY: all clean install

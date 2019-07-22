@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
    file_desc = open("/dev/vcio", 0);
    if (file_desc == -1)
       exit(1);
-   /* order of coords on the commasnd line/return order
+   /* order of coords on the command line/return order
     * top, bottom, left, right and they are all or nothing
     * you can't set just one value.
     */
