@@ -8,7 +8,7 @@ Section: utils
 Package: set-overscan
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}  
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Set Raspberry Pi overscan on the fly.
  Although I do most of my Raspberry Pi messing around on a headless
  Raspberry Pi via ssh my "gaming" Raspberry Pi is not always connected to the
@@ -24,7 +24,7 @@ Description: Set Raspberry Pi overscan on the fly.
  and made a few little changes to create overscan.c and have wrapped that in a
  simple bash shell script to make changes to the Raspberry Pi's overscan
  setting on the fly easy.
- . 
+ .
  Because I need to use mknod to create a special file the script must be run by
  root or using sudo.
  .
