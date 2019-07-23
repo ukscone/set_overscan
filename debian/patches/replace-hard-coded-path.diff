@@ -1,0 +1,36 @@
+Description: Replace hard-coded path to the overscan binary in set-overscan script
+Author: Jessy Rodrigue <rodrigue_jes@hotmail.com>
+Last-Update: 2019-07-23
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+Index: set-overscan/set-overscan
+===================================================================
+--- set-overscan.orig/set-overscan
++++ set-overscan/set-overscan
+@@ -113,7 +113,7 @@ if [ ! -c /dev/vcio ]; then
+ fi
+ 
+ # Get current overscan values from GPU
+-TEMP=$(./overscan)
++TEMP=$(/usr/bin/overscan)
+ GPU_OVERSCAN_TOP=$(echo "$TEMP" | awk -F ' ' '{print $1}')
+ GPU_OVERSCAN_BOTTOM=$(echo "$TEMP" | awk -F ' ' '{print $2}')
+ GPU_OVERSCAN_LEFT=$(echo "$TEMP" | awk -F ' ' '{print $3}')
+@@ -174,7 +174,7 @@ while [ $LOOP -eq 1 ]; do
+ 		"161") LOOP=0;; 
+     	esac
+ 
+-	./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
++	/usr/bin/overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
+ done
+ 
+ # Clear the screen
+@@ -209,7 +209,7 @@ while [ $LOOP -eq 1 ]; do
+         	"$tty_cuf1"|"$tty_kcuf1"|"$tty_cufx") ((GPU_OVERSCAN_RIGHT--));;
+         	"161") LOOP=0;;
+     	esac
+-	./overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
++	/usr/bin/overscan $GPU_OVERSCAN_TOP $GPU_OVERSCAN_BOTTOM $GPU_OVERSCAN_LEFT $GPU_OVERSCAN_RIGHT
+ 
+ done
+ 
