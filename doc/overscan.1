@@ -1,0 +1,37 @@
+.TH OVERSCAN "8" "JULY 2019" "" "User Commands"
+.SH NAME
+overscan \- set raspberry pi overscan on the fly
+.SH SYNOPSIS
+.B overscan
+.br
+.B overscan
+\fI\,TOP\/\fR
+\fI\,BOTTOM\/\fR
+\fI\,LEFT\/\fR
+\fI\,RIGHT\/\fR
+.SH DESCRIPTION
+.PP
+Old TV sets had a significant variation in the size of the picture they
+produced; some had cabinets that overlapped the screen. TV pictures were
+therefore given a black border so that none of the picture was lost; this
+is called overscan. Modern TVs and monitors don't need the border, and the
+signal doesn't allow for it. If the initial text shown on the screen
+disappears off the edge, you need to ajust overscan to bring the border back.
+.PP
+This script allows to ajust overscan without rebooting. The script sets the
+new values on the display for the current session. You still need to set these
+in \fI/boot/config.txt\fR if you want to keep them. You can use the provided
+command \fIset-overscan\fR to adjust and save those values.
+.PP
+If the script is executed without any arguments, it will give you the current
+configuration from \fBTOP\fR to \fBBOTTOM\fR, followed by \fBLEFT\fR to \fBRIGHT\fR.
+.PP
+To set new values, you must set all values in the following order:
+\fBTOP\fR, \fBBOTTOM\fR, \fBLEFT\fR, \fBRIGHT\fR.
+You can't set just one value.
+.SH AUTHOR
+Written by Russell Davis.
+.SH "SEE ALSO"
+set-overscan(8)
+.PP
+See the GitHub repository: <http://github.com/ukscone/set_overscan/>

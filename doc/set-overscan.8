@@ -1,0 +1,21 @@
+.TH SET-OVERSCAN "8" "JULY 2019" "" "System Administration tools and Daemons"
+.SH NAME
+set-overscan \- modify overscan on the fly
+.SH DESCRIPTION
+.PP
+Old TV sets had a significant variation in the size of the picture they
+produced; some had cabinets that overlapped the screen. TV pictures were
+therefore given a black border so that none of the picture was lost; this
+is called overscan. Modern TVs and monitors don't need the border, and the
+signal doesn't allow for it. If the initial text shown on the screen
+disappears off the edge, you need to ajust overscan to bring the border back.
+.PP
+This script allows to ajust overscan without rebooting. The script first sets
+the new values on the display using the provided \fIoverscan\fR command, then
+writes the values to \fI/boot/config.txt\fR
+.SH AUTHOR
+Written by Russell Davis.
+.SH "SEE ALSO"
+overscan(1)
+.PP
+See the GitHub repository: <http://github.com/ukscone/set_overscan/>

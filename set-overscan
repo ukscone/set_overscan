@@ -1,10 +1,10 @@
 #!/bin/bash
 #########################################################################
 # set_overscan.sh v0.11
-# Modify overscan on the fly.                                            
+# Modify overscan on the fly.
 # By Russell "ukscone" Davis using code from Broadcom, Dom Cobley & Alex Bradbury
 # 2013-03-10, 2014-07-23, 2015-05-01, 2017-08-01
-#   
+#
 # There is very little, ok no error/sanity checking. I've left that as an exercise
 # for the reader :D This is a very simplistic script but it works and i'm sure someone
 # will take it and make it all flashy and cool looking.
@@ -159,12 +159,12 @@ cat rand >/dev/fb0
 # Set overscan top-left corner
 LOOP=1
 while [ $LOOP -eq 1 ]; do
-	
+
 	TEXT=" TOP=$GPU_OVERSCAN_TOP, LEFT=$GPU_OVERSCAN_LEFT, BOTTOM=$GPU_OVERSCAN_BOTTOM, RIGHT=$GPU_OVERSCAN_RIGHT   "
         LEN=$((${#TEXT}/2))
         XPOS=$((XMIDPOINT-LEN))
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
-	
+
 	keypress=$(dd bs=3 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
         	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_TOP--));;
@@ -200,7 +200,7 @@ while [ $LOOP -eq 1 ]; do
         XPOS=$((XMIDPOINT-LEN))
         echo -ne "\033[${YMIDPOINT};${XPOS}f$TEXT"
 
-        
+
 	keypress=$(dd bs=3 count=1 2> /dev/null | get_kc)
 	case "$keypress" in
         	"$tty_cuu1"|"$tty_kcuu1") ((GPU_OVERSCAN_BOTTOM++));;
@@ -224,7 +224,7 @@ set_config_var overscan_bottom $GPU_OVERSCAN_BOTTOM $CONFIG
 set_config_var overscan_left $GPU_OVERSCAN_LEFT $CONFIG
 set_config_var overscan_right $GPU_OVERSCAN_RIGHT $CONFIG
 
-# Clean up 
+# Clean up
 if [ $created_mailbox -eq 1 ]; then
 	rm -f /dev/vcio
 fi
