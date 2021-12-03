@@ -1,4 +1,6 @@
 * Doesn't work on the Raspberry Pi 4 and actually isn't required for the Pi 4 *
+* was written in the wheezy/jessie era so probably does nasty things now so not *
+* recommended for use any more. *
 
 
 set-overscan
