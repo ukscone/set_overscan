@@ -95,9 +95,9 @@ tty_kcuu1=$(tput kcuu1 2>&1 | get_kc)
 tty_cud1=$(tput cud1 2>&1 | get_kc)            # down arrow
 tty_kcud1=$(tput kcud1 2>&1 | get_kc)
 tty_cub1=$(tput cub1 2>&1 | get_kc)            # left arrow
-tty_kcub1=$(tput kcud1 2>&1 | get_kc)
+tty_kcub1=$(tput kcub1 2>&1 | get_kc)
 tty_cuf1=$(tput cuf1 2>&1 | get_kc)            # right arrow
-tty_kcuf1=$(tput kcud1 2>&1 | get_kc)
+tty_kcuf1=$(tput kcuf1 2>&1 | get_kc)
 # Some terminals (e.g. PuTTY) send the wrong code for certain arrow keys
 if [ "$tty_cuu1" = "033 133 101" -o "$tty_kcuu1" = "033 133 101" ]; then
     tty_cudx="033 133 102"
